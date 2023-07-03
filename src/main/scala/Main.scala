@@ -19,9 +19,9 @@ object Main extends App {
   //array()
   df.printSchema()*/
 
-//  val df2 = df.select(array(df.columns.map(col):_*))
-//
-//  df2.printSchema()
+  //  val df2 = df.select(array(df.columns.map(col):_*))
+  //
+  //  df2.printSchema()
 
   /*val dfGrouped = df.groupBy(col("sensorLocalDate"))
     .agg(collect_list(col("array_sn")).as("array_list"))
@@ -51,6 +51,7 @@ object Main extends App {
 
   import spark.implicits._
 /*
+
   val columns = Seq("Seqno", "Quote")
   val data = Seq(("1", "Be the change that you wish to see in the world"),
     ("2", "Everyone thinks of changing the world, but no one thinks of changing himself."),
@@ -63,7 +64,7 @@ object Main extends App {
     arr.map(f => f.substring(0, 1).toUpperCase + f.substring(1, f.length)).mkString(" ")
   }
 
-  val convertUDF = udf(convertCase)
+  val convertUDF = udf(convertCase) //registering the function as UDF
 
   quotesDf.select(col("Seqno"),
     convertUDF(col("Quote")).as("Quote"))
@@ -74,7 +75,8 @@ object Main extends App {
   spark.udf.register("convertUDF", convertCase)
   quotesDf.createOrReplaceTempView("QUOTE_TABLE")
   spark.sql("select Seqno, convertUDF(Quote) from QUOTE_TABLE")
-    .show(false)*/
+    .show(false)
+*/
 
 
   /*val columns = Seq("Seqno", "Quote")
@@ -89,7 +91,7 @@ object Main extends App {
   spark.sql("""select * from global_temp.QUOTES""")
     .show(false)*/
 
-  val simpleData: Seq[(String, String, Int, String)] = Seq(
+  /*val simpleData: Seq[(String, String, Int, String)] = Seq(
     ("James", "Sales", 3000, "Delhi"), //1
     ("Michael", "Sales", 4600, "Gurugram"), //2
     ("Robert", "Sales", 4100, "Noida"), //3
@@ -97,12 +99,12 @@ object Main extends App {
     ("James", "Sales", 3000, "Gurugram"), // negate
     ("Scott", "Finance", 3300, "Noida"), //5
     ("Jen", "Finance", 3900, "Gurugram"), //6
-    ("Jeff", "Marketing", 3000, "Delhi"),//7
-    ("Kumar", "Marketing", 2000, "Noida"),//8
-    ("Saif", "Sales", 4100, "Delhi")//negate
+    ("Jeff", "Marketing", 3000, "Delhi"), //7
+    ("Kumar", "Marketing", 2000, "Noida"), //8
+    ("Saif", "Sales", 4100, "Delhi") //negate
   )
   val df = simpleData.toDF("employee_name", "department", "salary", "location")
-  df.show()
+  df.show()*/
 
   // ----------------------- Aggregate Functions -------------------------
 
@@ -192,8 +194,8 @@ object Main extends App {
 
   // ---------------- Window Functions --------------
   //row_number
-  val windowSpec = Window.partitionBy("department").orderBy("salary")
-//  val windowSpec = Window.partitionBy("department").orderBy(col("salary").desc) // If ordering on the basis of descending salary
+//  val windowSpec = Window.partitionBy("department").orderBy("salary")
+  //  val windowSpec = Window.partitionBy("department").orderBy(col("salary").desc) // If ordering on the basis of descending salary
   /*df.withColumn("row_number", row_number.over(windowSpec))
     .show()
 
@@ -230,7 +232,7 @@ object Main extends App {
 
   //For each department, show details of the employee with top salary
 
-  val rankedDf = df
+  /*val rankedDf = df
     .withColumn("row_number", row_number()
       .over(Window.partitionBy("department").orderBy(col("salary").desc)))
 
@@ -238,7 +240,120 @@ object Main extends App {
 
     rankedDf
     .where(col("row_number") === 1)
+    .show(false)*/
+
+  /*val emp = Seq((1, "Smith", -1, "2018", "10", "M", 3000),
+    (2, "Rose", 1, "2010", "20", "M", 4000),
+    (3, "Williams", 1, "2010", "10", "M", 1000),
+    (4, "Jones", 2, "2005", "10", "F", 2000),
+    (5, "Brown", 2, "2010", "40", "", -1),
+    (6, "Brown", 2, "2010", "50", "", -1)
+  )
+  val empColumns = Seq("emp_id", "name", "superior_emp_id", "year_joined",
+    "emp_dept_id", "gender", "salary")
+
+  val empDF = emp.toDF(empColumns: _*)
+
+  empDF.show(false)
+
+  val dept = Seq(("Finance", 10),
+    ("Marketing", 20),
+    ("Sales", 30),
+    ("IT", 40)
+  )
+
+  val deptColumns = Seq("dept_name", "dept_id")
+  val deptDF = dept.toDF(deptColumns: _*)
+
+  deptDF.show(false)
+
+
+  /*
+  1) join(right: Dataset[_]): DataFrame
+  2) join(right: Dataset[_], usingColumn: String): DataFrame
+  3) join(right: Dataset[_], usingColumns: Seq[String]): DataFrame
+  4) join(right: Dataset[_], usingColumns: Seq[String], joinType: String): DataFrame
+  5) join(right: Dataset[_], joinExprs: Column): DataFrame
+  6) join(right: Dataset[_], joinExprs: Column, joinType: String): DataFrame
+   */
+
+  println(" Cross Join: ===>")
+
+  empDF.join(deptDF)
+  .show(false)//wrong for this case as no column has same name
+
+  println("Inner Join: ===>")
+  empDF.join(deptDF, empDF("emp_dept_id") === deptDF("dept_id"), "inner")
     .show(false)
 
+  println("Outer Join ====>")
+  empDF.join(deptDF, empDF("emp_dept_id") === deptDF("dept_id"), "outer")
+    .show(false)
+  empDF.join(deptDF, empDF("emp_dept_id") === deptDF("dept_id"), "full")
+    .show(false)
+  empDF.join(deptDF, empDF("emp_dept_id") === deptDF("dept_id"), "fullouter")
+    .show(false)
+
+
+  println(s"Left Outer Join ===>")
+
+  empDF.join(deptDF, empDF("emp_dept_id") === deptDF("dept_id"), "left")
+    .show(false)
+  empDF.join(deptDF, empDF("emp_dept_id") === deptDF("dept_id"), "leftouter")
+    .show(false)
+
+
+  println("Right Outer Join ===>")
+
+  empDF.join(deptDF, empDF("emp_dept_id") === deptDF("dept_id"), "right")
+    .show(false)
+  empDF.join(deptDF, empDF("emp_dept_id") === deptDF("dept_id"), "rightouter")
+    .show(false)
+
+  println(" Left Semi Join ====>")
+
+  empDF.join(deptDF, empDF("emp_dept_id") === deptDF("dept_id"), "leftsemi")
+    .show(false)
+
+  println("Left Anti Join ===>")
+
+  empDF.join(deptDF, empDF("emp_dept_id") === deptDF("dept_id"), "leftanti")
+    .show(false)
+
+  println("Self Join ===>")
+
+  empDF.as("emp1")
+    .join(empDF.as("emp2"),
+    col("emp1.superior_emp_id") === col("emp2.emp_id"), "inner")
+    .select(col("emp1.emp_id"), col("emp1.name"),
+      col("emp2.emp_id").as("superior_emp_id"),
+      col("emp2.name").as("superior_emp_name"))
+    .show(false)*/
+
+  val emp = Seq((1, "Smith", -1, "2018", "10", "M", 3000),
+    (2, "Rose", 1, "2010", "20", "M", 4000),
+    (3, "Williams", 1, "2010", "10", "M", 1000),
+    (4, "Jones", 2, "2005", "10", "F", 2000),
+    (5, "Brown", 2, "2010", "40", "", -1),
+    (6, "Brown", 2, "2010", "50", "", -1)
+  )
+  val empColumns = Seq("emp_id", "name", "superior_emp_id", "year_joined",
+    "dept_id", "gender", "salary")
+
+  val empDF = emp.toDF(empColumns: _*)
+
+  empDF.show(false)
+
+  val dept = Seq(("Finance", 10),
+    ("Marketing", 20),
+    ("Sales", 30),
+    ("IT", 40)
+  )
+
+  val deptColumns = Seq("dept_name", "dept_id")
+  val deptDF = dept.toDF(deptColumns: _*)
+
+  empDF.join(deptDF, "dept_id")
+    .show(false)
 
 }
